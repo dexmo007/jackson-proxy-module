@@ -7,7 +7,6 @@ import java.util.Map;
 
 public final class PropertyUtils {
 
-
     static String getPropertyName(Method method) {
         final String methodName = method.getName();
         return Introspector.decapitalize(methodName.substring(methodName.startsWith("is") ? 2 : 3));
@@ -29,5 +28,9 @@ public final class PropertyUtils {
         return (T) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
                 new Class[]{interfaceClass},
                 new ProxyBeanInvocationHandler(data));
+    }
+
+    private PropertyUtils() {
+        throw new UnsupportedOperationException("cannot be instantiated");
     }
 }
