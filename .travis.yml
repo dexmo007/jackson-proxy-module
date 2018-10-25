@@ -1,0 +1,21 @@
+language: java
+sudo: false
+
+jdk:
+- openjdk10
+
+addons:
+  sonarcloud:
+    organization: "dexmo007-github"
+    token:
+      secure: "$SONAR_TOKEN"
+
+cache:
+  directories:
+  - "$HOME/.m2"
+  - "$HOME/.sonar/cache"
+
+script: mvn clean verify -B
+after_success:
+- mvn clean test jacoco:report coveralls:report
+- mvn sonar:sonar
