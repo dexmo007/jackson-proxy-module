@@ -5,3 +5,8 @@
 
 # jackson-proxy-module
 A Jackson Module that enables deserializing to an interface using a proxy
+
+### Development
+#### Coverage
+`mvn test jacoco:report` can be used to analyze test coverage locally. 
+Results can be found in `target/site/jacoco`.
