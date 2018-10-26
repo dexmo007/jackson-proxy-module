@@ -69,17 +69,13 @@ public class ProxyBeanDeserializer<T> extends JsonDeserializer<T> {
         final JsonIgnoreProperties.Value ignorals = ctxt.getConfig()
                 .getDefaultPropertyIgnorals(desc.getBeanClass(),
                         desc.getClassInfo());
-        if (propertyDef == null) {
-            if (ignorals.getIgnoreUnknown()
-                    || desc.getIgnoredPropertyNames().contains(fieldName)
-                    || ctxt.handleUnknownProperty(p, this, type, fieldName)) {
-                return true;
-            } else {
-                throw new InternalError("cannot happen");
-            }
+        if (propertyDef != null) {
+            return desc.getIgnoredPropertyNames().contains(fieldName)
+                    || ignorals.findIgnoredForDeserialization().contains(fieldName);
         }
-        return desc.getIgnoredPropertyNames().contains(fieldName)
-                || ignorals.findIgnoredForDeserialization().contains(fieldName);
+        return ignorals.getIgnoreUnknown()
+                || desc.getIgnoredPropertyNames().contains(fieldName)
+                || ctxt.handleUnknownProperty(p, this, type, fieldName);
     }
 
 
