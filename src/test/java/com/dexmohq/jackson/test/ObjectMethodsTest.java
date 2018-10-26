@@ -1,9 +1,11 @@
 package com.dexmohq.jackson.test;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
+import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -39,5 +41,17 @@ public class ObjectMethodsTest extends TestBase {
 
         assertThat(dto.toString()).isEqualTo(dto2.toString());
         assertThat(dto.toString()).isEqualTo(map.toString());
+    }
+
+    @Test
+    void testEquals() throws IOException {
+        final Dto dto = mapper.readValue("{}", Dto.class);
+        assertThat(dto).isNotEqualTo(null);
+        assertThat(dto).isNotEqualTo(Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
+                new Class[]{Dto.class},
+                (proxy, method, args) -> {
+                    throw new UnsupportedOperationException();
+                }));
+        assertThat(dto).isNotEqualTo(Map.of());
     }
 }
