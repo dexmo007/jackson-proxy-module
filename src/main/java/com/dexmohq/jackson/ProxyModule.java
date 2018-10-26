@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.deser.Deserializers;
 
+/**
+ * @author Henrik Drefs
+ */
 public class ProxyModule extends Module {
 
     public String getModuleName() {
