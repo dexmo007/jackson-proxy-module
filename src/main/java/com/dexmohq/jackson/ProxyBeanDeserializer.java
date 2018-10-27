@@ -1,18 +1,19 @@
 package com.dexmohq.jackson;
 
-import com.dexmohq.jackson.util.BeanProxyUtils;
+import com.dexmohq.jackson.util.PropertyAccessorsInfo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.core.TreeNode;
-import com.fasterxml.jackson.databind.BeanDescription;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.exc.InvalidDefinitionException;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.beans.IntrospectionException;
 import java.io.IOException;
+import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -27,25 +28,30 @@ import java.util.Map.Entry;
 public class ProxyBeanDeserializer<T> extends JsonDeserializer<T> {
 
     private final Class<T> type;
+    private final BeanDescription beanDescription;
+    private JsonIgnoreProperties.Value ignorals;
 
-    public ProxyBeanDeserializer(Class<T> type) {
+    @SuppressWarnings("unchecked")
+    public ProxyBeanDeserializer(JavaType type, DeserializationConfig config, BeanDescription beanDescription) {
         if (!type.isInterface()) {
             throw new IllegalArgumentException("Type must be an interface");
         }
-        this.type = type;
+        this.type = (Class<T>) type.getRawClass();
+        this.beanDescription = beanDescription;
+        this.ignorals = config.getDefaultPropertyIgnorals(beanDescription.getBeanClass(),
+                beanDescription.getClassInfo());
     }
 
     @Override
     public T deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         final TreeNode treeNode = p.readValueAsTree();
         if (!treeNode.isObject()) {
-            throw ctxt.wrongTokenException(p, type, JsonToken.START_OBJECT, "proxying only viable for json objects");
+            throw MismatchedInputException.from(p, type, "Expecting object");
         }
 
         final HashMap<String, BeanPropertyDefinition> propertyTypes = new HashMap<>();
 
-        final BeanDescription desc = ctxt.getConfig().introspect(ctxt.constructType(type));
-        final List<BeanPropertyDefinition> properties = desc.findProperties();
+        final List<BeanPropertyDefinition> properties = beanDescription.findProperties();
         for (BeanPropertyDefinition property : properties) {
             propertyTypes.put(property.getName(), property);
         }
@@ -56,25 +62,49 @@ public class ProxyBeanDeserializer<T> extends JsonDeserializer<T> {
             final String fieldName = field.getKey();
             final JsonNode node = field.getValue();
             final BeanPropertyDefinition propertyDef = propertyTypes.get(fieldName);
-            if (isIgnoredProperty(p, ctxt, desc, fieldName, propertyDef)) {
+            if (isIgnoredProperty(p, ctxt, fieldName, propertyDef)) {
                 continue;
             }
-            final Object propertyValue = p.getCodec().readValue(p.getCodec().treeAsTokens(node), propertyDef.getPrimaryType());
+            assert propertyDef != null;// if it is null and not ignored, an exception is thrown by ctxt.handleUnknownProperty(..)
+            final ObjectCodec codec = p.getCodec();
+            final JsonParser subParser = codec.treeAsTokens(node);
+            final Object propertyValue = codec.readValue(subParser, propertyDef.getPrimaryType());
             data.put(propertyDef.getInternalName(), propertyValue);
         }
-        return BeanProxyUtils.proxy(type, data);
+        final PropertyAccessorsInfo info;
+        try {
+            info = PropertyAccessorsInfo.introspect(type);
+        } catch (IntrospectionException e) {
+            throw InvalidDefinitionException.from(p, "Error during proxy interface introspection", e);
+        }
+        @SuppressWarnings("unchecked") final T proxy = (T) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
+                new Class[]{type},
+                new ProxyBeanInvocationHandler(data, info));
+        return proxy;
     }
 
-    private boolean isIgnoredProperty(JsonParser p, DeserializationContext ctxt, BeanDescription desc, String fieldName, BeanPropertyDefinition propertyDef) throws IOException {
-        final JsonIgnoreProperties.Value ignorals = ctxt.getConfig()
-                .getDefaultPropertyIgnorals(desc.getBeanClass(),
-                        desc.getClassInfo());
+    /**
+     * Checks if a given property should be ignored.
+     * <p>
+     * As a side-effect this method will throw an exception if the given property is unknown
+     * and the {@link DeserializationFeature} {@code FAIL_ON_UNKNOWN_PROPERTIES} is enabled.
+     *
+     * @param p           the current parser
+     * @param ctxt        the current deserialization context
+     * @param fieldName   the name of the parsed (JSON) field
+     * @param propertyDef the property definition of the field or null if the field is unknown
+     * @return true if the property should be skipped
+     * @throws IOException if an unknown property occurs and the {@code FAIL_ON_UNKNOWN_PROPERTIES} feature is enabled
+     * @see DeserializationContext#handleUnknownProperty(JsonParser, JsonDeserializer, Object, String)
+     * @see DeserializationFeature#FAIL_ON_UNKNOWN_PROPERTIES
+     */
+    private boolean isIgnoredProperty(JsonParser p, DeserializationContext ctxt, String fieldName, BeanPropertyDefinition propertyDef) throws IOException {
         if (propertyDef != null) {
-            return desc.getIgnoredPropertyNames().contains(fieldName)
+            return beanDescription.getIgnoredPropertyNames().contains(fieldName)
                     || ignorals.findIgnoredForDeserialization().contains(fieldName);
         }
         return ignorals.getIgnoreUnknown()
-                || desc.getIgnoredPropertyNames().contains(fieldName)
+                || beanDescription.getIgnoredPropertyNames().contains(fieldName)
                 || ctxt.handleUnknownProperty(p, this, type, fieldName);
     }
 

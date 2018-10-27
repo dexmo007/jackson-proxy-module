@@ -6,11 +6,40 @@
 
     <groupId>com.dexmohq.jackson</groupId>
     <artifactId>proxy-module</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <!-- must be of form X.Y.Z-SNAPSHOT (where -SNAPSHOT is optional, obviously) -->
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>Jackson Proxy Module</name>
+    <description>A Jackson Module that enables deserializing to an interface using a proxy.</description>
+
+    <licenses>
+        <license>
+            <name>MIT</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>dexmo007</id>
+            <name>Henrik Drefs</name>
+            <url>https://github.com/dexmo007</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <url>https://github.com/dexmo007/jackson-proxy-module</url>
+    </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <version.file>src/main/java/com/dexmohq/jackson/ModuleVersionHolder.java</version.file>
+        <version.template.file>${version.file}.template</version.template.file>
         <!-- Dependency versions -->
+        <jackson.version>2.9.7</jackson.version>
         <junit-jupiter-api.version>5.3.1</junit-jupiter-api.version>
     </properties>
 
@@ -19,7 +48,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.9.7</version>
+            <version>${jackson.version}</version>
         </dependency>
 
         <dependency>
@@ -56,6 +85,7 @@
     </dependencies>
 
     <build>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -71,6 +101,20 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.1</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>templating-maven-plugin</artifactId>
+                <version>1.0.0</version>
+                <executions>
+                    <execution>
+                        <id>filtering-java-templates</id>
+                        <goals>
+                            <goal>filter-sources</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>

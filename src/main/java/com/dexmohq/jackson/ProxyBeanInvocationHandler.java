@@ -1,6 +1,6 @@
 package com.dexmohq.jackson;
 
-import com.dexmohq.jackson.util.BeanInterfaceInfo;
+import com.dexmohq.jackson.util.PropertyAccessorsInfo;
 import lombok.RequiredArgsConstructor;
 
 import java.lang.invoke.MethodHandles;
@@ -19,7 +19,7 @@ import java.util.Map;
 public class ProxyBeanInvocationHandler implements InvocationHandler {
 
     private final Map<String, Object> data;
-    private final BeanInterfaceInfo info;
+    private final PropertyAccessorsInfo info;
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
