@@ -5,6 +5,8 @@ import com.fasterxml.jackson.core.util.VersionUtil;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.deser.Deserializers;
+import com.fasterxml.jackson.databind.deser.ValueInstantiator;
+import com.fasterxml.jackson.databind.deser.ValueInstantiators;
 
 /**
  * @author Henrik Drefs
@@ -23,14 +25,17 @@ public class ProxyModule extends Module {
     }
 
     public void setupModule(SetupContext context) {
-        context.addDeserializers(new Deserializers.Base() {
-            @SuppressWarnings("unchecked")
+        context.addBeanDeserializerModifier(new ProxyBeanDeserializerModifier());
+        context.addValueInstantiators(new ValueInstantiators.Base() {
             @Override
-            public JsonDeserializer<?> findBeanDeserializer(JavaType type, DeserializationConfig config, BeanDescription beanDesc) throws JsonMappingException {
-                if (type.isInterface()) {
-                    return new ProxyBeanDeserializer(type, config, beanDesc);
+            public ValueInstantiator findValueInstantiator(DeserializationConfig config, BeanDescription beanDesc, ValueInstantiator defaultInstantiator) {
+                if (defaultInstantiator != null && defaultInstantiator.canInstantiate()) {
+                    return defaultInstantiator;
                 }
-                return super.findBeanDeserializer(type, config, beanDesc);
+                if (!beanDesc.getBeanClass().isInterface()) {
+                    return defaultInstantiator;
+                }
+                return new ProxyValueInstantiator(beanDesc);
             }
         });
     }

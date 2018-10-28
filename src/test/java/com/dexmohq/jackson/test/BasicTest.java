@@ -1,8 +1,5 @@
 package com.dexmohq.jackson.test;
 
-import com.dexmohq.jackson.ProxyModule;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -15,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class BasicTest {
+public class BasicTest extends TestBase {
 
     public interface FooDto {
         String getName();
@@ -70,9 +67,6 @@ public class BasicTest {
     @Test
     void testFooDto() throws IOException {
         final FooDtoImpl bean = new FooDtoImpl("bar", 1);
-        final ObjectMapper mapper = new ObjectMapper()
-                .registerModule(new ProxyModule())
-                .enable(SerializationFeature.INDENT_OUTPUT);
         final String json = mapper.writeValueAsString(bean);
         final FooDto fooDto = mapper.readValue(json, FooDto.class);
         assertThat(Proxy.isProxyClass(fooDto.getClass())).isTrue();

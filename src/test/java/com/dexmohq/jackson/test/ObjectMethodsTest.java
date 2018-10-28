@@ -40,7 +40,6 @@ public class ObjectMethodsTest extends TestBase {
         assertThat(dto.hashCode()).isEqualTo(map.hashCode());
 
         assertThat(dto.toString()).isEqualTo(dto2.toString());
-        assertThat(dto.toString()).isEqualTo(map.toString());
     }
 
     @Test

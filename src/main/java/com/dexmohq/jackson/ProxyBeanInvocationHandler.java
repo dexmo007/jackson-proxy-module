@@ -59,6 +59,10 @@ public class ProxyBeanInvocationHandler implements InvocationHandler {
                 "Proxying only possible for default methods, equals, hashCode, toString and property accessors"));
     }
 
+    public void setProperty(String name, Object value) {
+        data.put(name, value);
+    }
+
     /**
      * Invokes a default method on the proxy interface
      *
