@@ -2,11 +2,17 @@ package com.dexmohq.jackson;
 
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.core.util.VersionUtil;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.DeserializationConfig;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.databind.deser.Deserializers;
 import com.fasterxml.jackson.databind.deser.ValueInstantiator;
 import com.fasterxml.jackson.databind.deser.ValueInstantiators;
+import com.fasterxml.jackson.databind.type.TypeBindings;
+import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.fasterxml.jackson.databind.type.TypeModifier;
+
+import java.lang.reflect.Type;
 
 /**
  * @author Henrik Drefs
@@ -35,7 +41,11 @@ public class ProxyModule extends Module {
                 if (!beanDesc.getBeanClass().isInterface()) {
                     return defaultInstantiator;
                 }
-                return new ProxyValueInstantiator(beanDesc);
+//               config
+//                if (beanDesc.getBeanClass().getName().equals("com.dexmohq.jackson.test.InMixWithTypeResolverTests$Property")) {
+//                    return defaultInstantiator;
+//                }
+                return new ProxyValueInstantiator(beanDesc.getType(), beanDesc);
             }
         });
     }

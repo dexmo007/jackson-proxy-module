@@ -25,8 +25,8 @@ class ProxyBeanDeserializerModifier extends BeanDeserializerModifier {
                 beanDesc.getClassInfo());
         for (final BeanPropertyDefinition property : beanDesc.findProperties()) {
 
-            if (builder.findProperty(property.getFullName()) != null ||
-                    ignorals.findIgnoredForDeserialization().contains(property.getName())) {
+            // builder.findProperty(property.getFullName()) != null ||
+            if (ignorals.findIgnoredForDeserialization().contains(property.getName())) {
                 continue;
             }
             final TypeDeserializer typeDeserializer;
@@ -35,9 +35,9 @@ class ProxyBeanDeserializerModifier extends BeanDeserializerModifier {
             } catch (JsonMappingException e) {
                 throw new IllegalStateException(e);
             }
-            builder.addProperty(new SettableProxyProperty(property,
+            builder.addOrReplaceProperty(new SettableProxyProperty(property,
                     typeDeserializer
-            ));
+            ), true);
         }
         return builder;
     }

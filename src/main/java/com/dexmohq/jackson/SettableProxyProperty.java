@@ -60,29 +60,7 @@ class SettableProxyProperty extends SettableBeanProperty {
 
     @Override
     public void deserializeAndSet(JsonParser p, DeserializationContext ctxt, Object instance) throws IOException {
-        Object value;
-        if (p.hasToken(JsonToken.VALUE_NULL)) {
-            if (_skipNulls) {
-                return;
-            }
-            value = _nullProvider.getNullValue(ctxt);
-        } else if (_valueTypeDeserializer == null) {
-            value = _valueDeserializer.deserialize(p, ctxt);
-            // 04-May-2018, tatu: [databind#2023] Coercion from String (mostly) can give null
-            if (value == null) {
-                if (_skipNulls) {
-                    return;
-                }
-                value = _nullProvider.getNullValue(ctxt);
-            }
-        } else {
-            value = _valueDeserializer.deserializeWithType(p, ctxt, _valueTypeDeserializer);
-        }
-        try {
-            set(instance, value);
-        } catch (Exception e) {
-            _throwAsIOE(p, e, value);
-        }
+        deserializeSetAndReturn(p, ctxt, instance);
     }
 
     @Override
